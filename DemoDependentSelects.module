@@ -1,0 +1,133 @@
+<?php namespace ProcessWire;
+
+class DemoDependentSelects extends WireData implements Module, ConfigurableModule {
+
+	/**
+	 * Module information
+	 */
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Demo Dependent Selects',
+			'summary' => 'Demo of a module config that uses dependent selects.',
+			'version' => '0.1.0',
+			'author' => 'Robin Sallis',
+			'href' => 'https://github.com/Toutouwai/DemoDependentSelects',
+			'icon' => 'cogs',
+			'requires' => 'ProcessWire>=3.0.0, PHP>=5.4.0',
+		);
+	}
+
+	/**
+	 * Some data to use in the animal/breed dependent selects
+	 */
+	protected $animals = [
+		'Cat' => [
+			'Manx',
+			'Maine Coon',
+			'Burmese',
+		],
+		'Dog' => [
+			'Manchester Terrier',
+			'Kelpie',
+			'Lurcher',
+		],
+	];
+
+	/**
+	 * Config inputfields
+	 *
+	 * @param InputfieldWrapper $inputfields
+	 */
+	public function getModuleConfigInputfields($inputfields) {
+		$modules = $this->wire()->modules;
+		$config = $this->wire()->config;
+
+		// Add JavaScript
+		$info = $this->getModuleInfo();
+		$version = $info['version'];
+		$config->scripts->add($config->urls->{$this} . "$this.js?v=$version");
+
+		// Dependent select 1: animals and breeds
+
+		// Select animal (source select)
+		/** @var InputfieldSelect $f */
+		$f = $modules->get('InputfieldSelect');
+		$f_name = 'animal';
+		$f->name = $f_name;
+		$f->label = 'Animal';
+		// Add options
+		foreach($this->animals as $animal => $breeds) {
+			// Add option
+			// Use data-valid-values attribute to store values that are valid for the dependent select
+			$f->addOption($animal, $animal, ['data-valid-values' => implode('|', $breeds)]);
+		}
+		$f->value = $this->$f_name;
+		$f->columnWidth = 50;
+		// Set data-target attribute to the ID of its dependent select, so the JS knows they are linked
+		$f->attr('data-target', 'breed');
+		$inputfields->add($f);
+
+		// Select breed (target select)
+		/** @var InputfieldSelect $f */
+		$f = $modules->get('InputfieldSelect');
+		$f_name = 'breed';
+		$f->name = $f_name;
+		$f->id = $f_name;
+		$f->label = 'Breed';
+		foreach($this->animals as $breeds) {
+			foreach($breeds as $breed) {
+				// Set "hidden" attribute so options are hidden by default
+				$f->addOption($breed, $breed, ['hidden' => 'hidden']);
+			}
+		}
+		$f->value = $this->$f_name;
+		$f->columnWidth = 50;
+		$inputfields->add($f);
+
+		// Dependent select 2: templates and fields
+
+		// A FieldsArray to hold all the fields that are used templates
+		$used_fields = new FieldsArray();
+
+		// Select template (source select)
+		/** @var InputfieldSelect $f */
+		$f = $modules->get('InputfieldSelect');
+		$f_name = 'template';
+		$f->id = $f_name;
+		$f->label = 'Template';
+		// Add options
+		foreach($this->wire()->templates as $template) {
+			// Skip system templates
+			if($template->flags) continue;
+			// Add template fields to $used_fields
+			foreach($template->fieldgroup as $field) {
+				$used_fields->add($field);
+			}
+			// Add option
+			// Use data-valid-values attribute to store values that are valid for the dependent select
+			$f->addOption($template->id, $template->name, ['data-valid-values' => $template->fieldgroup->implode('|', 'id')]);
+		}
+		$f->value = $this->$f_name;
+		$f->columnWidth = 50;
+		// Set data-target attribute to the ID of its dependent select, so the JS knows they are linked
+		$f->attr('data-target', 'field');
+		$inputfields->add($f);
+
+		// Select field (target select)
+		/** @var InputfieldSelect $f */
+		$f = $modules->get('InputfieldSelect');
+		$f_name = 'field';
+		$f->name = $f_name;
+		$f->id = $f_name;
+		$f->label = 'Field';
+		foreach($used_fields->sort('name') as $id => $field) {
+			// Set "hidden" attribute so options are hidden by default
+			$f->addOption($id, $field->name, ['hidden' => 'hidden']);
+		}
+		$f->value = $this->$f_name;
+		$f->columnWidth = 50;
+		$inputfields->add($f);
+
+	}
+
+}
