@@ -9,7 +9,7 @@ class DemoDependentSelects extends WireData implements Module, ConfigurableModul
 		return array(
 			'title' => 'Demo Dependent Selects',
 			'summary' => 'Demo of a module config that uses dependent selects.',
-			'version' => '0.1.0',
+			'version' => '0.1.1',
 			'author' => 'Robin Sallis',
 			'href' => 'https://github.com/Toutouwai/DemoDependentSelects',
 			'icon' => 'cogs',
@@ -93,7 +93,7 @@ class DemoDependentSelects extends WireData implements Module, ConfigurableModul
 		/** @var InputfieldSelect $f */
 		$f = $modules->get('InputfieldSelect');
 		$f_name = 'template';
-		$f->id = $f_name;
+		$f->name = $f_name;
 		$f->label = 'Template';
 		// Add options
 		foreach($this->wire()->templates as $template) {
